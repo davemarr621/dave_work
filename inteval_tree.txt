@@ -1,0 +1,888 @@
+Planesweep Methodology Outline
+
+1. Create set of 2D coordinates - use numpy for speed
+2. Create a left edge for each point, so a LL_X,LL_Y, and UL_X,UL_Y - this is the interval
+3. Add a point_id to each point's interval and number from 1 to n
+4. Create an ordered list of the intervals
+5. Store all of the point information for each interval in an interval tree - each interval must have pt_id, X, Y, LL_X, LL_Y, UL_X, UL_Y
+6. Detect the overlapping intervals in the Interval Tree
+7. Create a priority que containing just the LL_X of all points - then sort by each points x coordinate from low to high 
+8. At each event in the priority que, determine the active interval then check the interval tree for overlapping intervals
+9. If interval is active and there is overlap in the corresponding interval tree interval then count the overlap
+10. Store the count in a variable and return the point_id, x and y of the point with the greatest count
+
+Step-by-step
+1. Create set of 2D coordinates - use numpy for speed
+2. Create a left edge for each point, so a LL_X,LL_Y, and UL_X,UL_Y - this is the interval
+
+import numpy as np
+from numpy.lib.recfunctions import append_fields
+pt_id = np.arange(10)
+x = np.random.random(10)
+y = np.random.random(10)
+ll_x = x-1
+ll_y = y-1
+ul_x = x-1
+ul_y = y + 1
+data = np.array( list(zip(pt_id,x,y,ll_x, ll_y,ul_x,ul_y)), dtype=[('pt_id',float),('x',float),('y',float),('ll_x',float),('ll_y',float),('ul_x',float),('ul_y',float)])
+print(data.shape)
+print(data)
+print(data.dtype.names)
+
+
+3. Add a point_id to each point's interval and number from 1 to n
+
+Done.
+
+4. Create an ordered (sorted) list of the intervals using the x coord (low to high)
+
+data_sort = np.sort(data, order='x')
+print(data_sort)
+
+5. Store all of the point information for each interval in an interval tree - each interval must have pt_id, X, Y, LL_X, LL_Y, UL_X, UL_Y
+And see the compiler here:https://www.datacamp.com/community/tutorials/python-numpy-tutorial
+
+https://www.programcreek.com/python/example/97649/intervaltree.IntervalTree
+
+def intervalListToIntervalTree(self, interval_list):
+        """
+        given an ordered list of (chromosome name, start, end)
+        this is transformed to a number of interval trees,
+        one for each chromosome
+        """
+        cut_int_tree = {}
+        chrbin_boundaries = OrderedDict()
+        if len(interval_list) == 0:
+            log.warning("Interval list is empty")
+            return cut_int_tree, chrbin_boundaries
+
+        intval_id = 0
+        chr_start_id = 0
+        previous_chrom = None
+        for intval in interval_list:
+            chrom, start, end = intval[0:3]
+            start = int(start)
+            end = int(end)
+            if previous_chrom != chrom:
+                if previous_chrom is None:
+                    previous_chrom = chrom
+
+                chrbin_boundaries[previous_chrom] = \
+                    (chr_start_id, intval_id)
+                chr_start_id = intval_id
+                cut_int_tree[chrom] = IntervalTree()
+                previous_chrom = chrom
+
+            cut_int_tree[chrom].add(Interval(start, end, intval_id))
+
+            intval_id += 1
+        chrbin_boundaries[chrom] = (chr_start_id, intval_id)
+
+        return cut_int_tree, chrbin_boundaries 
+
+6. Detect the overlapping intervals in the Interval Tree
+here is example code for rectangles to check if rectangles overlap - using LR and UL coordinates - now think just intervals
+
+# Python program to check if rectangles overlap 
+class Point: 
+    def __init__(self, x, y): 
+        self.x = x 
+        self.y = y 
+  
+# Returns true if two rectangles(l1, r1)  
+# and (l2, r2) overlap 
+def doOverlap(l1, r1, l2, r2): 
+      
+    # If one rectangle is on left side of other 
+    if(l1.x > r2.x or l2.x > r1.x): 
+        return False
+  
+    # If one rectangle is above other 
+    if(l1.y < r2.y or l2.y < r1.y): 
+        return False
+  
+    return True
+  
+# Driver Code 
+if __name__ == "__main__": 
+    l1 = Point(0, 10) 
+    r1 = Point(10, 0) 
+    l2 = Point(5, 5) 
+    r2 = Point(15, 0) 
+  
+    if(doOverlap(l1, r1, l2, r2)): 
+        print("Rectangles Overlap") 
+    else: 
+        print("Rectangles Don't Overlap") 
+
+7. Create a priority que containing just the LL_X of all points - then sort by each points x coordinate from low to high 
+
+8. At each event in the priority que, determine the active interval then check the interval tree for overlapping intervals 
+
+9. If interval is active and there is overlap in the corresponding interval tree interval then count the overlap
+
+10. Store the count in a variable and return the point_id, x and y of the point with the greatest count
+
+
+
+import numpy as np
+from numpy.lib.recfunctions import append_fields
+pt_id = np.arange(10)
+x = np.random.random(10)
+y = np.random.random(10)
+ll_x = x-1
+ll_y = y-1
+ul_x = x-1
+ul_y = y + 1
+data = np.array( list(zip(pt_id,x,y,ll_x, ll_y,ul_x,ul_y)), dtype=[('pt_id',float),('x',float),('y',float),('ll_x',float),('ll_y',float),('ul_x',float),('ul_y',float)])
+print(data.shape)
+print(data)
+print(data.dtype.names)
+
+1. Use Firefox
+2. https://www.pythonanywhere.com/user/davemarr621/
+
+from intervaltree import IntervalTree, Interval
+from intervaltree.node import Node
+
+tree = IntervalTree()
+new_tree = IntervalTree()
+print(tree)
+
+tree = IntervalTree([Interval(0,10,'pt_1'), Interval(5,15,'pt_2')])
+print(tree)
+print("Length of tree => ", len(tree))
+print("Sorted => ", sorted(tree))
+
+print("Beginning points => ",[iv.begin for iv in sorted(tree)])
+print("Ending points => ",[iv.end for iv in sorted(tree)])
+for interval_obj in tree:
+    print([interval_obj])
+
+print("Tree begin => ", tree.begin())
+print("Tree end => ", tree.end())
+
+root = Node()
+
+def overlapping(intervals):
+    last = (-1, -1)
+    overlapping = set()
+
+    for curr in sorted(intervals, key=lambda p: p[0]):
+        if curr[0] < last[1]:
+            overlapping.add(curr)
+            overlapping.add(last)
+        last = max(curr, last, key=lambda p: p[1])
+
+    return list(overlapping - set((-1, -1)))
+
+print ("Overlapping", overlapping([(1, 3), (12, 14), (2, 4), (13, 15), (5, 10)]))
+
+# Try this too
+def overlaps(intervals):
+    es = []
+    for a, b in intervals:
+        print(a,b)
+        es.append((a, -1))
+        es.append((b, 1))
+    es.sort()
+    print(es)
+    result = 0
+    n = 0
+    for a, s in es:
+        if s == -1: result += n
+        n -= s
+        print(a,s)
+    return result
+
+print ("Overlaps", overlaps([(1, 3), (12, 14), (2, 4), (13, 15), (5, 10)]))
+
+# And try this
+MAX_VALUE = 2**20-1
+f_arr = [0]*MAX_VALUE
+
+def reset():
+    global f_arr, MAX_VALUE
+    f_arr[:] = [0]*MAX_VALUE
+
+def update(idx,val):
+    global f_arr
+    while idx<MAX_VALUE:
+        f_arr[idx]+=val
+        idx += (idx & -idx)
+
+def read(idx):
+    global f_arr
+    if idx <= 0:
+        return 0
+    result = 0
+    while idx > 0:
+        result += f_arr[idx]
+        idx -= (idx & -idx)
+    return result
+
+intervals = [(1,4),(3,7),(5,8),(14,17),(0,2),(11,14)]
+intervals = sorted(intervals, key=lambda x: x[0])
+reset()
+total = 0
+for processed, interval in enumerate(intervals):
+    (start, end) = interval
+    total += processed - read(start-1)
+    update(end, 1)
+    print(processed, interval)
+print ("Total overlaps", total)
+
+# And this
+import intervaltree
+
+intervals = [(1, 3.5), (5.5, 8.7), (10.2, 22.6), (22.7, 23.1)]
+tree = IntervalTree.from_tuples(intervals)
+print([intervals.index((tr.begin, tr.end)) for tr in tree[5.8:22.9]])
+
+******************
+# These are tuples
+import random
+from intervaltree import IntervalTree
+random.seed(3)
+
+# Create 2d tuple as double (to 2 digits)
+pt_coord = [] # the point
+ll_coord = [] # the lower left coordinate
+ul_coord = [] # the upper left coordinate
+intervals = [] # lower left x to upper left x
+for i in range(5):
+    x = round(random.uniform(1,10),2)
+    y = round(random.uniform(1,10),2)
+    pt_coord.append([x,y])
+    ll_x = x - 1
+    ll_y = y - 1
+    ul_x = x - 1
+    ul_y = y + 1
+    intervals.append([ll_y,ul_y])
+
+print("Intervals =>", sorted(intervals))
+
+# Calculate overlap
+# a = lower y-value of interval
+# s = upper y-value of interval
+# n = count of overlap where at least 2 is overlap
+# the location of the overlap occurs when the Count is > 2 and y_high
+# goes from -1 to 1 so first overlap is
+# y_low => 2.11 y_high => -1 Count => 2 and overlap is y_low => 2.11
+# to y_low = 2.59
+
+def overlaps(intervals):
+    es = []
+    for a, b in intervals:
+        # print(a,b)
+        es.append((a, -1))
+        es.append((b, 1))
+    es.sort()
+    # print(es)
+    result = 0
+    n = 0
+    for a, s in es:
+        if s == -1: result += n
+        n -= s
+        print("y_low => ",a,"y_high => ",s,"Count => ",n)
+    return result
+
+print ("Overlaps", overlaps(intervals))
+
+*************************
+
+# These are tuples
+import random
+random.seed(3)
+
+# Create 2d tuple as double (to 2 digits) as x, y
+pt_coord = [] # the point
+ll_coord = [] # the lower left coordinate
+ul_coord = [] # the upper left coordinate
+intervals = [] # lower left x to upper left x
+
+print("Starting ...")
+print()
+for i in range(10):
+    x = round(random.uniform(1,10),2)
+    y = round(random.uniform(1,10),2)
+    pt_coord.append([x,y])
+    ll_x = x - 1
+    ll_y = y - 1
+    ul_x = x - 1
+    ul_y = y + 1
+    intervals.append([ll_y,ul_y])
+
+print("All intervals, sorted by x_coord =>", sorted(intervals))
+print()
+
+# Calculate overlap
+# a = lower y-value of interval
+# s = upper y-value of interval
+# n = count of overlap where at least 2 is overlap
+# the location of the overlap occurs when the Count is > 2 and y_high
+# goes from -1 to 1 so first overlap is
+# y_low => 2.11 y_high => -1 Count => 2 and overlap is y_low => 2.11
+# to y_low = 2.59
+
+count_list = []
+def overlaps(intervals):
+    es = []
+    for a, b in intervals:
+        # print(a,b)
+        es.append((a, -1))
+        es.append((b, 1))
+    es.sort()
+    # print(es)
+    result = 0
+    n = 0
+    for a, s in es:
+        if s == -1: result += n
+        n -= s
+        # print("y_low => ",a,"Count => ",n)
+        if n >= 2 and s == -1:
+            print("Overlap: y-value start => ", a)
+            count_list.append(n)
+            count_list.append(a)
+
+    return result
+
+print ("Number of overlaps => ", overlaps(intervals))
+print()
+# print("Count_list", count_list)
+
+# Create pairs from count_list with first value as count and second as y-value
+my_pairs = list()
+while(count_list):
+    z = count_list.pop(0); za = count_list.pop(0)
+    my_pairs.append((z,za))
+
+#Sort by count or first number in the pair from high count to low count
+def sortFirst(val):
+    return val[0]
+
+my_pairs.sort(key = sortFirst, reverse = True)
+print("List (H => L) by count, y_coord => ",my_pairs)
+print()
+print("Max count and y_value ", max(my_pairs))
+
+https://repl.it/repls/ShowyTurquoiseDesigners
+
+***************************************
+
+# This script will calculate the greatest density of points
+# The script starts by calculating the greatest density of points
+# in the y direction then performs a similar check for the x direction
+# Where the greatest x density exists in the greatest y positions
+# is the greatest overlap
+# These are tuples
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+# random.seed(3)
+
+# Create 2d tuple as double (to 2 digits) as x, y
+pt_coord = [] # the point
+intervals = [] # lower left x to upper left x
+
+print("Starting ...")
+print()
+for i in range(20):
+    x = round(random.uniform(1,20),2)
+    y = round(random.uniform(1,20),2)
+    pt_coord.append([x,y])
+    ll_x = x - 1
+    ll_y = y - 1
+    ul_x = x - 1
+    ul_y = y + 1
+    intervals.append([ll_y,ul_y])
+    plt.xlim(0, 20)
+    plt.ylim(0, 20)
+    plt.figure(0)
+    plt.scatter(x,y)
+    plt.savefig('plot.png')
+
+print("All intervals, sorted by x_coord =>", sorted(intervals))
+print()
+# Calculate overlap
+# a = lower y-value of interval
+# s = upper y-value of interval
+# n = count of overlap where at least 2 is overlap
+# the location of the overlap occurs when the Count is > 2 and y_high
+# goes from -1 to 1 so first overlap is
+# y_low => 2.11 y_high => -1 Count => 2 and overlap is y_low => 2.11
+# to y_low = 2.59
+count_list = []
+def overlaps(intervals):
+    es = []
+    for a, b in intervals:
+        # print(a,b)
+        es.append((a, -1))
+        es.append((b, 1))
+    es.sort()
+    # print(es)
+    result = 0
+    n = 0
+    for a, s in es:
+        if s == -1: result += n
+        n -= s
+        # print("y_low => ",a,"Count => ",n)
+        if n >= 2 and s == -1:
+            print("Overlap: y-value start => ", a)
+            count_list.append(n)
+            count_list.append(a)
+
+    return result
+
+print ("Number of overlaps => ", overlaps(intervals))
+print()
+# print("Count_list", count_list)
+
+# Create pairs from count_list with first value as count and second as y-value
+my_pairs = list()
+while(count_list):
+    z = count_list.pop(0); za = count_list.pop(0)
+    my_pairs.append((z,za))
+
+#Sort by count or first number in the pair from high count to low count
+def sortFirst(val):
+    return val[0]
+
+my_pairs.sort(key = sortFirst, reverse = True)
+int_y_coord = max(my_pairs) # y coord in densest area of overlap
+
+print("List (H => L) by count, y_coord => ",my_pairs)
+print()
+print("Max count and y_value ", int_y_coord)
+# Now calculate the greatest density in the x -direction
+# Start by subsetting all of the original set of points
+# Constrained to the y-min and y-max centered on the y-value
+# print(type(max_y_coord)) # a tuple
+# Set y value max and y value min
+y_interval_center = (int_y_coord[1]) # y-interval centered
+y_max = y_interval_center + 1.5 # max y_value
+y_min = y_interval_center - 1.5 # min y_value
+print("Y-max =>", y_max)
+print("Y-interval centered here => ", y_interval_center)
+print("Y-min =>", y_min)
+print()
+print(sorted(pt_coord))
+# Sort point coordinate list by y-coordinate
+sorted_y_list = sorted(pt_coord, key=lambda y_value: y_value[1])
+# print(type(sorted_y_list))
+# print(sorted_y_list)
+# First convert a list to a tuple 
+# remove all points that are less than y_center_value + 1 and -1 and
+# create a new list using list comprehension
+print()
+print("Converted coord list to tuples")
+sorted_y_list = tuple(sorted_y_list)
+print(type(sorted_y_list))
+# create a sorted list of coordinates using y_max and y_min
+result = [j for j in pt_coord if j[1] <= y_max and j[1] >= y_min]
+y_sorted_result = sorted(result, key=lambda x: x[1])
+print(y_sorted_result)
+# Plot new set of truncated coordinates
+x_val = [x1[0] for x1 in y_sorted_result]
+y_val = [x1[1] for x1 in y_sorted_result]
+# Create scatter plot
+plt.xlim(0, 20)
+plt.ylim(0, 20)
+plt.figure(1)
+plt.scatter(x_val,y_val)
+plt.savefig('plot2.png')
+
+****************** 02132020
+# This script will calculate the greatest density of points
+# The script starts by calculating the greatest density of points
+# in the y direction then performs a similar check for the x direction
+# Where the greatest x density exists in the greatest y positions
+# is the greatest overlap
+# These are tuples
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+# random.seed(3)
+
+# Create 2d tuple as double (to 2 digits) as x, y
+pt_coord = [] # the point
+intervals = [] # y intervals: lower left x,y to upper left x,y
+
+print("Starting ...")
+#print()
+for i in range(100):
+    x = round(random.uniform(1,20),2)
+    y = round(random.uniform(1,20),2)
+    pt_coord.append([x,y])
+    ll_x = x - 1
+    ll_y = y - 1
+    ul_x = x - 1
+    ul_y = y + 1
+    intervals.append([ll_y,ul_y])
+
+    plt.xlim(0, 25)
+    plt.ylim(0, 25)
+    plt.figure(0)
+    plt.scatter(x,y,s=40)
+    plt.savefig('all_points.png')
+
+# print("All y intervals, sorted by x_coord =>", sorted(intervals))
+print()
+# Calculate overlap
+# a = lower y-value of interval
+# s = upper y-value of interval
+# n = count of overlap where at least 2 is overlap
+# the location of the overlap occurs when the Count is > 2 and y_high
+# goes from -1 to 1 so first overlap is
+# y_low => 2.11 y_high => -1 Count => 2 and overlap is y_low => 2.11
+# to y_low = 2.59
+count_list = []
+def overlaps(intervals):
+    es = []
+    for a, b in intervals:
+        # print(a,b)
+        es.append((a, -1))
+        es.append((b, 1))
+    es.sort()
+    # print(es)
+    result = 0
+    n = 0
+    for a, s in es:
+        if s == -1: result += n
+        n -= s
+        # print("y_low => ",a,"Count => ",n)
+        if n >= 2 and s == -1:
+            # print("Overlap: y-value start => ", a)
+            count_list.append(n)
+            count_list.append(a)
+
+    return result
+
+print ("Number of y overlaps => ", overlaps(intervals))
+# print()
+# print("Count_list", count_list)
+
+# Create pairs from count_list with first value as count and second as y-value
+my_pairs = list()
+while(count_list):
+    z = count_list.pop(0); za = count_list.pop(0)
+    my_pairs.append((z,za))
+
+#Sort by count or first number in the pair from high count to low count
+def sortFirst(val):
+    return val[0]
+
+my_pairs.sort(key = sortFirst, reverse = True)
+int_y_coord = max(my_pairs) # y coord in densest area of overlap
+
+# print("List (H => L) by count, y_coord => ",my_pairs)
+print()
+print("Max count and y_value ", int_y_coord)
+print()
+# Now calculate the greatest density in the x -direction
+# Start by subsetting all of the original set of points
+# Constrained to the y-min and y-max centered on the y-value
+# print(type(max_y_coord)) # a tuple
+# Set y value max and y value min
+y_interval_center = (int_y_coord[1]) # y-interval centered
+y_max = y_interval_center + 1.5 # max y_value
+y_min = y_interval_center - 1.5 # min y_value
+print("Y-max =>", y_max)
+print("Y-interval centered here => ", y_interval_center)
+print("Y-min =>", y_min)
+# print()
+# print(sorted(pt_coord))
+# Sort point coordinate list by y-coordinate
+sorted_y_list = sorted(pt_coord, key=lambda y_value: y_value[1])
+# print(type(sorted_y_list))
+# print(sorted_y_list)
+# First convert a list to a tuple 
+# remove all points that are less than y_center_value + 1 and -1 and
+# create a new list using list comprehension
+# print()
+#print("Converted coord list to tuples")
+sorted_y_list = tuple(sorted_y_list)
+# print(type(sorted_y_list))
+# create a sorted list of coordinates using y_max and y_min
+result = [j for j in pt_coord if j[1] <= y_max and j[1] >= y_min]
+y_sorted_result = sorted(result, key=lambda x: x[1])
+# print(y_sorted_result)
+# Plot new set of truncated coordinates
+x_val = [x1[0] for x1 in y_sorted_result]
+y_val = [x1[1] for x1 in y_sorted_result]
+# Create scatter plot
+plt.xlim(0, 25)
+plt.ylim(0, 25)
+#plt.figure(1)
+plt.scatter(x_val,y_val,s=80)
+plt.savefig('y_overlap_points.png')
+
+# Calculate x intervals
+x_intervals = [] # x intervals: ll_x,y to lr_x,y
+#x_val = [x1[0] for x1 in y_sorted_result]
+#print(x_val)
+for zz in range(len(y_sorted_result)):
+  # print(zz,y_sorted_result[zz] )
+  xi = y_sorted_result[zz][0]
+  yi = y_sorted_result[zz][1]
+  xi_left = xi - 1
+  xi_right = xi + 1
+  #print(xi, xi_left, xi_right)
+  x_intervals.append([xi_left,xi_right])
+
+  #plt.xlim(0, 25)
+  #plt.ylim(0, 25)
+  #plt.figure(2)
+  #plt.scatter(xi_left,yi)
+  #plt.savefig('plot3.png')
+
+#print()
+# print("All x intervals, sorted by y_coord =>", sorted(x_intervals))
+print()
+
+x_count_list = []
+def x_overlaps(x_intervals):
+    xes = []
+    for xa, xb in x_intervals:
+        # print(xa,xb)
+        xes.append((xa, -1))
+        xes.append((xb, 1))
+    xes.sort()
+    # print(xes)
+    x_result = 0
+    xn = 0
+    for xa, xs in xes:
+        if xs == -1: x_result += xn
+        xn -= xs
+        # print("y_low => ",xa,"Count => ",xn)
+        if xn >= 2 and xs == -1:
+            # print("Overlap: x-value start => ", xa)
+            x_count_list.append(xn)
+            x_count_list.append(xa)
+
+    return x_result
+
+print ("Number of x overlaps => ", x_overlaps(x_intervals))
+# print()
+
+# Create pairs from count_list with first value as count and second as y-value
+x_my_pairs = list()
+while(x_count_list):
+    xz = x_count_list.pop(0); xza = x_count_list.pop(0)
+    x_my_pairs.append((xz,xza))
+
+#Sort by count or first number in the pair from high count to low count
+def sortFirst(val):
+    return val[0]
+
+x_my_pairs.sort(key = sortFirst, reverse = True)
+int_x_coord = max(x_my_pairs) # y coord in densest area of overlap
+# print("List (H => L) by count, y_coord => ",x_my_pairs)
+print()
+print("Max count and x_value ", int_x_coord)
+print()
+# Highest degree of overlap based on intervals in y and x direction
+print("Highest degree of overlap (x,y) => ",int_x_coord[1], int_y_coord[1])
+plt.scatter(int_x_coord[1], int_y_coord[1], s=200, facecolors='none', edgecolors='r')
+plt.savefig('greatest_overlap_point.png')
+
+*****************************
+# This script will calculate the greatest density of points
+# The script starts by calculating the greatest density of points
+# in the y direction then performs a similar check for the x direction
+# Where the greatest x density exists in the greatest y positions
+# is the greatest overlap
+# These are tuples
+import random
+import matplotlib.pyplot as plt
+import timeit
+# random.seed(3)
+t1 = timeit.default_timer() # timer
+
+# Create 2d tuple as double (to 2 digits) as x, y
+pt_coord = [] # the point
+intervals = [] # y intervals: lower left x,y to upper left x,y
+
+print("Starting ...")
+#print()
+for i in range(100):
+    x = round(random.uniform(1,20),2)
+    y = round(random.uniform(1,20),2)
+    pt_coord.append([x,y])
+    ll_x = x - 1
+    ll_y = y - 1
+    ul_x = x - 1
+    ul_y = y + 1
+    intervals.append([ll_y,ul_y])
+
+    plt.xlim(0, 25)
+    plt.ylim(0, 25)
+    plt.figure(0)
+    plt.scatter(x,y,s=40)
+    plt.savefig('all_points.png')
+
+# print("All y intervals, sorted by x_coord =>", sorted(intervals))
+print()
+# Calculate overlap
+# a = lower y-value of interval
+# s = upper y-value of interval
+# n = count of overlap where at least 2 is overlap
+# the location of the overlap occurs when the Count is > 2 and y_high
+# goes from -1 to 1 so first overlap is
+# y_low => 2.11 y_high => -1 Count => 2 and overlap is y_low => 2.11
+# to y_low = 2.59
+count_list = []
+def overlaps(intervals):
+    es = []
+    for a, b in intervals:
+        # print(a,b)
+        es.append((a, -1))
+        es.append((b, 1))
+    es.sort()
+    # print(es)
+    result = 0
+    n = 0
+    for a, s in es:
+        if s == -1: result += n
+        n -= s
+        # print("y_low => ",a,"Count => ",n)
+        if n >= 2 and s == -1:
+            # print("Overlap: y-value start => ", a)
+            count_list.append(n)
+            count_list.append(a)
+
+    return result
+
+print ("Number of y overlaps => ", overlaps(intervals))
+# print()
+# print("Count_list", count_list)
+
+# Create pairs from count_list with first value as count and second as y-value
+my_pairs = list()
+while(count_list):
+    z = count_list.pop(0); za = count_list.pop(0)
+    my_pairs.append((z,za))
+
+#Sort by count or first number in the pair from high count to low count
+def sortFirst(val):
+    return val[0]
+
+my_pairs.sort(key = sortFirst, reverse = True)
+int_y_coord = max(my_pairs) # y coord in densest area of overlap
+
+# print("List (H => L) by count, y_coord => ",my_pairs)
+print()
+print("Max count and y_value ", int_y_coord)
+print()
+# Now calculate the greatest density in the x -direction
+# Start by subsetting all of the original set of points
+# Constrained to the y-min and y-max centered on the y-value
+# print(type(max_y_coord)) # a tuple
+# Set y value max and y value min
+y_interval_center = (int_y_coord[1]) # y-interval centered
+y_max = y_interval_center + 1.5 # max y_value
+y_min = y_interval_center - 1.5 # min y_value
+print("Y-max =>", y_max)
+print("Y-interval centered here => ", y_interval_center)
+print("Y-min =>", y_min)
+# print()
+# print(sorted(pt_coord))
+# Sort point coordinate list by y-coordinate
+sorted_y_list = sorted(pt_coord, key=lambda y_value: y_value[1])
+# print(type(sorted_y_list))
+# print(sorted_y_list)
+# First convert a list to a tuple 
+# remove all points that are less than y_center_value + 1 and -1 and
+# create a new list using list comprehension
+# print()
+#print("Converted coord list to tuples")
+sorted_y_list = tuple(sorted_y_list)
+# print(type(sorted_y_list))
+# create a sorted list of coordinates using y_max and y_min
+result = [j for j in pt_coord if j[1] <= y_max and j[1] >= y_min]
+y_sorted_result = sorted(result, key=lambda x: x[1])
+# print(y_sorted_result)
+# Plot new set of truncated coordinates
+x_val = [x1[0] for x1 in y_sorted_result]
+y_val = [x1[1] for x1 in y_sorted_result]
+# Create scatter plot
+plt.xlim(0, 25)
+plt.ylim(0, 25)
+#plt.figure(1)
+plt.scatter(x_val,y_val,s=80)
+plt.savefig('y_overlap_points.png')
+
+# Calculate x intervals
+x_intervals = [] # x intervals: ll_x,y to lr_x,y
+#x_val = [x1[0] for x1 in y_sorted_result]
+#print(x_val)
+for zz in range(len(y_sorted_result)):
+  # print(zz,y_sorted_result[zz] )
+  xi = y_sorted_result[zz][0]
+  yi = y_sorted_result[zz][1]
+  xi_left = xi - 1
+  xi_right = xi + 1
+  #print(xi, xi_left, xi_right)
+  x_intervals.append([xi_left,xi_right])
+
+  #plt.xlim(0, 25)
+  #plt.ylim(0, 25)
+  #plt.figure(2)
+  #plt.scatter(xi_left,yi)
+  #plt.savefig('plot3.png')
+
+#print()
+# print("All x intervals, sorted by y_coord =>", sorted(x_intervals))
+print()
+
+x_count_list = []
+def x_overlaps(x_intervals):
+    xes = []
+    for xa, xb in x_intervals:
+        # print(xa,xb)
+        xes.append((xa, -1))
+        xes.append((xb, 1))
+    xes.sort()
+    # print(xes)
+    x_result = 0
+    xn = 0
+    for xa, xs in xes:
+        if xs == -1: x_result += xn
+        xn -= xs
+        # print("y_low => ",xa,"Count => ",xn)
+        if xn >= 2 and xs == -1:
+            # print("Overlap: x-value start => ", xa)
+            x_count_list.append(xn)
+            x_count_list.append(xa)
+
+    return x_result
+
+print ("Number of x overlaps => ", x_overlaps(x_intervals))
+# print()
+
+# Create pairs from count_list with first value as count and second as y-value
+x_my_pairs = list()
+while(x_count_list):
+    xz = x_count_list.pop(0); xza = x_count_list.pop(0)
+    x_my_pairs.append((xz,xza))
+
+#Sort by count or first number in the pair from high count to low count
+def sortFirst(val):
+    return val[0]
+
+x_my_pairs.sort(key = sortFirst, reverse = True)
+int_x_coord = max(x_my_pairs) # y coord in densest area of overlap
+# print("List (H => L) by count, y_coord => ",x_my_pairs)
+print()
+print("Max count and x_value ", int_x_coord)
+print()
+# Highest degree of overlap based on intervals in y and x direction
+print("Highest degree of overlap (x,y) => ",int_x_coord[1], int_y_coord[1])
+plt.scatter(int_x_coord[1], int_y_coord[1], s=200, facecolors='none', edgecolors='r')
+plt.savefig('greatest_overlap_point.png')
+
+# testing timeit()
+print("{} seconds needed for code run".format(timeit.default_timer() - t1))
+
+
+
